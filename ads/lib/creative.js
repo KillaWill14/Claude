@@ -11,12 +11,8 @@ const SIZES = {
   story: { w: 1080, h: 1920 },    // Stories / Reels 9:16
 };
 
-const PALETTES = {
-  // Navy #1f3d7b and gray #a8a9ad are the logo's own colors.
-  brand: { bg: '#eef2f8', card: '#ffffff', ink: '#14254a', muted: '#5a6b80', line: '#dde3ee', brand: '#1f3d7b', accent: '#d9a21b', ringA: '#f4a51c', ringB: '#e0711a', btn: '#1f3d7b', btnInk: '#ffffff' },
-  light: { bg: '#ffffff', card: '#ffffff', ink: '#101d3a', muted: '#55657a', line: '#e3e8ef', brand: '#1f3d7b', accent: '#f28c1b', ringA: '#ffb340', ringB: '#f07a12', btn: '#2a55a8', btnInk: '#ffffff' },
-  navy: { dark: true, bg: '#14254a', card: '#1f3463', ink: '#ffffff', muted: '#bcc8db', line: '#33497a', brand: '#ffffff', accent: '#f2b632', ringA: '#ffcf5a', ringB: '#f29b1b', btn: '#f2b632', btnInk: '#14254a' },
-};
+const { loadBrand } = require('../../lib/brand');
+
 
 const CATS = [
   { key: 'ai', name: 'AI Optimization' },
@@ -57,7 +53,7 @@ function ring(score, px, p, { label = 'Overall score', track } = {}) {
     <defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${p.ringA}"/><stop offset="1" stop-color="${p.ringB}"/></linearGradient></defs>
     <circle cx="100" cy="100" r="${r}" fill="none" stroke="${track || p.line}" stroke-width="18"/>
     <circle cx="100" cy="100" r="${r}" fill="none" stroke="url(#${id})" stroke-width="18" stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 100 100)"/>
-    <text x="100" y="${label ? 108 : 118}" text-anchor="middle" font-family="Archivo" font-weight="900" font-size="58" fill="${p.ink}">${score}<tspan font-size="30" dy="-18">%</tspan></text>
+    <text x="100" y="${label ? 108 : 118}" text-anchor="middle" font-family="${p.display}" font-weight="900" font-size="58" fill="${p.ink}">${score}<tspan font-size="30" dy="-18">%</tspan></text>
     ${label ? `<text x="100" y="136" text-anchor="middle" font-family="Public Sans" font-weight="700" font-size="11" letter-spacing="1.6" fill="${p.muted}">${label.toUpperCase()}</text>` : ''}
   </svg>`;
 }
@@ -75,48 +71,38 @@ function rows(cats, p, scale = 1) {
   }).join('')}</div>`;
 }
 
-let fontCss = null;
-function fontFaces() {
-  if (fontCss != null) return fontCss;
+const fontCss = {};
+function fontFaces(brand) {
+  if (fontCss[brand.key] != null) return fontCss[brand.key];
   const nm = path.join(__dirname, '..', 'node_modules', '@fontsource');
   const face = (family, pkg, weight) => {
     const file = path.join(nm, pkg, 'files', `${pkg}-latin-${weight}-normal.woff2`);
     return fs.existsSync(file) ? `@font-face{font-family:"${family}";font-weight:${weight};src:url(data:font/woff2;base64,${fs.readFileSync(file).toString('base64')}) format("woff2");}` : '';
   };
-  fontCss = [
-    ...[400, 700, 800, 900].map(w => face('Archivo', 'archivo', w)),
+  fontCss[brand.key] = [
+    ...brand.fonts.weights.map(w => face(brand.fonts.display, brand.fonts.fontsource, w)),
     ...[400, 600, 700].map(w => face('Public Sans', 'public-sans', w)),
     ...[400, 600].map(w => face('Fraunces', 'fraunces', w)),
   ].join('');
-  return fontCss;
-}
-
-// The Mid-America Web Solutions logo from midamericaweb.com: full color on light
-// backgrounds, white on navy. Falls back to the name in text if the files are missing.
-const logoCache = {};
-function logoData(variant) {
-  if (!(variant in logoCache)) {
-    const file = path.join(__dirname, '..', '..', 'assets', `logo-${variant}.png`);
-    logoCache[variant] = fs.existsSync(file) ? `data:image/png;base64,${fs.readFileSync(file).toString('base64')}` : null;
-  }
-  return logoCache[variant];
+  return fontCss[brand.key];
 }
 
 function brandMark(agency, p, scale = 1) {
-  const logo = logoData(p.dark ? 'white' : 'color');
-  if (logo) return `<div style="display:flex;flex:none"><img src="${logo}" alt="${agency.name}" style="height:${68 * scale}px;width:auto;max-width:100%;object-fit:contain;display:block"></div>`;
+  // Each brand's own logo: full color on light backgrounds, light version on dark ones.
+  const logo = p.brandObj.logo(p.dark ? 'white' : 'color');
+  if (logo) return `<div style="display:flex;flex:none"><img src="${logo}" alt="${agency.name}" style="height:${p.brandObj.logoHeight.ad * scale}px;width:auto;max-width:100%;object-fit:contain;display:block"></div>`;
   return `<div class="mark" style="font-size:${26 * scale}px;color:${p.brand}"><i style="width:${16 * scale}px;height:${16 * scale}px;background:${p.accent}"></i>${agency.name}</div>`;
 }
 
 function base(p, size, body) {
   const { w, h } = SIZES[size];
   return `<!doctype html><html><head><meta charset="utf-8"><style>
-${fontFaces()}
+${fontFaces(p.brandObj)}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{width:${w}px;height:${h}px;overflow:hidden}
 body{background:${p.bg};color:${p.ink};font-family:"Public Sans",Arial,sans-serif;-webkit-font-smoothing:antialiased}
-.d{font-family:"Archivo","Arial Narrow",sans-serif}
-.mark{display:flex;align-items:center;gap:.5em;font-family:"Archivo",sans-serif;font-weight:800;letter-spacing:.01em}
+.d{font-family:"${p.display}","Arial Narrow",sans-serif}
+.mark{display:flex;align-items:center;gap:.5em;font-family:"${p.display}",sans-serif;font-weight:800;letter-spacing:.01em}
 .mark i{display:inline-block;transform:rotate(45deg)}
 .rows{display:flex;flex-direction:column;width:100%}
 .row{display:flex;align-items:center;font-weight:700}
@@ -124,8 +110,8 @@ body{background:${p.bg};color:${p.ink};font-family:"Public Sans",Arial,sans-seri
 .rn{flex:0 0 38%}
 .rb{flex:1;background:${p.line};border-radius:99px;overflow:hidden}
 .rb span{display:block;height:100%;border-radius:99px}
-.rg{display:flex;align-items:center;justify-content:center;border-radius:50%;color:#fff;font-family:"Archivo",sans-serif;font-weight:900;flex:none}
-.btn{display:inline-flex;align-items:center;justify-content:center;border-radius:14px;font-family:"Archivo",sans-serif;font-weight:800;background:${p.btn};color:${p.btnInk}}
+.rg{display:flex;align-items:center;justify-content:center;border-radius:50%;color:#fff;font-family:"${p.display}",sans-serif;font-weight:900;flex:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;border-radius:14px;font-family:"${p.display}",sans-serif;font-weight:800;background:${p.btn};color:${p.btnInk}}
 .sample{font-weight:600;color:${p.muted};letter-spacing:.04em}
 </style></head><body>${body}</body></html>`;
 }
@@ -179,7 +165,7 @@ function stand(d) {
   const features = [['ai', 'AI search<br>optimized'], ['local', 'Local<br>presence'], ['bars', 'Actionable<br>insights']];
   const preview = `<div style="background:${p.card};border-radius:22px;box-shadow:0 22px 60px rgba(15,31,51,.2);overflow:hidden;border:1px solid ${p.line}">
       <div style="height:44px;background:${p.line};display:flex;align-items:center;gap:10px;padding:0 18px">${['#ff5f57', '#febc2e', '#28c840'].map(c => `<i style="width:14px;height:14px;border-radius:50%;background:${c};display:inline-block"></i>`).join('')}</div>
-      <div style="background:${p.brand === '#ffffff' ? p.accent : p.brand};color:#fff;padding:22px 28px;font-family:Archivo;font-weight:800;font-size:${tall ? 30 : 24}px">Get found by more people in your community</div>
+      <div style="background:${p.dark ? p.accent : p.brand};color:#fff;padding:22px 28px;font-family:'${p.display}';font-weight:800;font-size:${tall ? 30 : 24}px">Get found by more people in your community</div>
       <div style="padding:28px;display:flex;${tall ? 'gap:34px;align-items:center' : 'flex-direction:column;align-items:center;gap:22px'}">
         ${ring(d.score, tall ? 250 : 200, p)}
         ${rows(d.cats, p, tall ? 0.8 : 0.66)}
@@ -188,7 +174,7 @@ function stand(d) {
   const text = `<div style="display:flex;flex-direction:column;gap:${tall ? 40 : 30}px">
       <h1 class="d" style="font-size:${tall ? 118 : 84}px;line-height:.95;font-weight:900;text-transform:uppercase;letter-spacing:-.01em">${title}</h1>
       <p style="font-size:${tall ? 38 : 30}px;color:${p.muted};font-weight:600;line-height:1.25">${d.sub}</p>
-      <div style="display:flex;gap:${tall ? 40 : 22}px">${features.map(([i, t]) => `<div style="display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;font-weight:800;font-size:${tall ? 24 : 19}px;text-transform:uppercase;line-height:1.15">${icon(i, tall ? 58 : 46, p.brand === '#ffffff' ? p.accent : p.brand)}<span>${t}</span></div>`).join('')}</div>
+      <div style="display:flex;gap:${tall ? 40 : 22}px">${features.map(([i, t]) => `<div style="display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;font-weight:800;font-size:${tall ? 24 : 19}px;text-transform:uppercase;line-height:1.15">${icon(i, tall ? 58 : 46, p.dark ? p.accent : p.brand)}<span>${t}</span></div>`).join('')}</div>
     </div>`;
   return base(p, size, tall
     ? `<div style="height:100%;padding:100px 70px;display:flex;flex-direction:column;justify-content:space-between;gap:40px">${text}${preview}${brandMark(d.agency, p, 1.2)}</div>`
@@ -207,7 +193,7 @@ function headline(d) {
   return base(p, size, `<div style="height:100%;padding:${tall ? '110px 70px 90px' : '64px 64px 56px'};display:flex;flex-direction:column;justify-content:space-between;gap:30px">
     ${snippet}
     <div>
-      <h1 style="font-family:Fraunces,Georgia,serif;font-weight:400;font-size:${tall ? 112 * s : 82}px;line-height:1.04;letter-spacing:-.01em">${d.title}</h1>
+      <h1 style="font-family:'${p.headlineFont}',Georgia,serif;font-weight:${p.headlineWeight};font-size:${tall ? 112 * s : 82}px;line-height:1.04;letter-spacing:-.01em">${d.title}</h1>
       <p style="font-size:${tall ? 36 * s : 28}px;color:${p.muted};margin-top:18px;font-weight:600">${d.sub}</p>
     </div>
     <div style="display:flex;justify-content:space-between;align-items:center;gap:20px">
@@ -219,11 +205,19 @@ function headline(d) {
 
 const TEMPLATES = { scorecard, ring: bigRing, stand, headline };
 
-function buildCreative({ template, palette, size, title, sub, score, catScores, agency }) {
-  const p = PALETTES[palette];
+function palettesFor(brandKey) {
+  return loadBrand(brandKey).ads.palettes;
+}
+
+function buildCreative({ brand: brandKey, template, palette, size, title, sub, score, catScores }) {
+  const brand = loadBrand(brandKey);
+  const base = brand.ads.palettes[palette];
+  if (!base) throw new Error(`Brand ${brand.key} has no palette "${palette}". Choose from: ${Object.keys(brand.ads.palettes).join(', ')}`);
+  const p = { ...base, display: brand.fonts.display, headlineFont: brand.fonts.headline || 'Fraunces', headlineWeight: brand.fonts.headlineWeight || 400, brandObj: brand };
+  const agency = { name: brand.name };
   const cats = CATS.map((c, i) => ({ ...c, score: catScores[i] }));
   const esc = s => String(s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
   return TEMPLATES[template]({ p, size, title: esc(title), sub: esc(sub), score, cats, agency: { name: esc(agency.name) } });
 }
 
-module.exports = { buildCreative, SIZES, PALETTES, TEMPLATES, CATS, gradeOf };
+module.exports = { buildCreative, palettesFor, SIZES, TEMPLATES, CATS, gradeOf };

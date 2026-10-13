@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// Runs a Mid-America Web Solutions audit and writes the report files.
+// Runs a website audit and writes the report files, branded for the chosen agency.
 //
-//   node run.js <website> [--city "Wichita, KS"] [--name "Business"] [--rating 4.6]
+//   node run.js <website> [--brand midamerica|boldform] [--city "Wichita, KS"] [--name "Business"] [--rating 4.6]
 //     [--reviews 37] [--profile yes|no] [--newest-review-days 12] [--maps-url URL]
 //     [--competitor "Name | 4.7 | 212"] (repeat for up to three competitors)
 //     [--pagespeed psi.json] [--pages DIR] [--out DIR]
@@ -15,6 +15,7 @@ const path = require('node:path');
 const { runAudit } = require('./lib/audit');
 const { parsePagespeed } = require('./lib/google');
 const { renderReport } = require('./lib/report');
+const { loadBrand, listBrands, DEFAULT_BRAND } = require('./lib/brand');
 
 function parseArgs(argv) {
   const out = { _: [] };
@@ -54,16 +55,12 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   const site = args._[0];
   if (!site) {
-    console.error('Usage: node run.js <website> [--city "City, ST"] [--name "Business"] [--rating 4.6] [--reviews 37] [--profile yes|no] [--pages DIR] [--out DIR]');
+    console.error('Usage: node run.js <website> [--brand midamerica|boldform] [--city "City, ST"] [--name "Business"] [--rating 4.6] [--reviews 37] [--profile yes|no] [--pages DIR] [--out DIR]');
     process.exit(1);
   }
-  const skillDir = path.resolve(__dirname, '..');
-  let agency = {};
-  try { agency = JSON.parse(fs.readFileSync(path.join(skillDir, 'agency.json'), 'utf8')); } catch { /* defaults below */ }
-  for (const k of ['name', 'phone', 'email', 'website', 'bookingUrl']) {
-    const env = process.env[`AGENCY_${k.replace(/[A-Z]/g, c => `_${c}`).toUpperCase()}`];
-    if (env) agency[k] = env;
-  }
+  let brand;
+  try { brand = loadBrand(args.brand || DEFAULT_BRAND); } catch (err) { console.error(err.message); process.exit(1); }
+  const agency = { key: brand.key };
 
   const input = {
     url: site,
@@ -97,6 +94,7 @@ async function main() {
     process.exit(1);
   }
 
+  a.brand = brand.key;
   const outDir = path.resolve(args.out || process.cwd());
   fs.mkdirSync(outDir, { recursive: true });
   const slug = a.domain.replace(/[^a-z0-9]+/g, '-');
@@ -122,7 +120,7 @@ async function main() {
   console.log(`Artifact page:   ${files.artifact}`);
   console.log(`Standalone page: ${files.standalone}`);
   console.log(`Raw data:        ${files.json}`);
-  if (!agency.phone && !agency.email) console.log('NOTE: agency.json has no phone or email, so the report call-to-action has no contact details.');
+  console.log(`Branded for: ${brand.name}${listBrands().length > 1 ? ` (other brands: ${listBrands().filter(k => k !== brand.key).join(', ')})` : ''}`);
 }
 
 main();

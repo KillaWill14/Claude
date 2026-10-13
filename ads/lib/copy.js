@@ -65,12 +65,6 @@ const CLOSERS = [
   'Takes 30 seconds to request.',
 ];
 
-const SIGNOFFS = [
-  'From Mid-America Web Solutions in Belleville, IL.',
-  'Mid-America Web Solutions | Web design & SEO',
-  '',
-];
-
 // Meta shows about 27-40 characters of a headline before truncating.
 const HEADLINES = [
   'Free Website Audit',
@@ -122,4 +116,4 @@ function fill(template, industry, city) {
     .replace(/^\w/, c => c.toUpperCase());
 }
 
-module.exports = { INDUSTRIES, HOOKS, OFFERS, CLOSERS, SIGNOFFS, HEADLINES, DESCRIPTIONS, CTAS, IMAGE_HEADLINES, LIMITS, fill };
+module.exports = { INDUSTRIES, HOOKS, OFFERS, CLOSERS, HEADLINES, DESCRIPTIONS, CTAS, IMAGE_HEADLINES, LIMITS, fill };

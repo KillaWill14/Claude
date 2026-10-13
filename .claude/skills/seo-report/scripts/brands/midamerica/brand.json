@@ -1,0 +1,22 @@
+{
+  "key": "midamerica",
+  "name": "Mid-America Web Solutions",
+  "code": "MAWS",
+  "phone": "877-355-5020",
+  "email": "info@midamericaweb.com",
+  "website": "https://midamericaweb.com",
+  "bookingUrl": "https://midamericaweb.com/contact-us/",
+  "about": "a web design and SEO agency in Belleville, Illinois",
+  "colors": { "primary": "#1f3d7b", "accent": "#d9a21b", "ground": "#f2f5f8", "ink": "#13233a" },
+  "fonts": { "display": "Archivo", "displayCss": "Archivo:wdth,wght@62..125,500..900", "fontsource": "archivo", "weights": [400, 700, 800, 900] },
+  "logoHeight": { "report": 46, "desk": 52, "ad": 68 },
+  "ads": {
+    "link": "https://midamericaweb.com/contact-us/",
+    "signoffs": ["From Mid-America Web Solutions in Belleville, IL.", "Mid-America Web Solutions | Web design & SEO", ""],
+    "palettes": {
+      "brand": { "bg": "#eef2f8", "card": "#ffffff", "ink": "#14254a", "muted": "#5a6b80", "line": "#dde3ee", "brand": "#1f3d7b", "accent": "#d9a21b", "ringA": "#f4a51c", "ringB": "#e0711a", "btn": "#1f3d7b", "btnInk": "#ffffff" },
+      "light": { "bg": "#ffffff", "card": "#ffffff", "ink": "#101d3a", "muted": "#55657a", "line": "#e3e8ef", "brand": "#1f3d7b", "accent": "#f28c1b", "ringA": "#ffb340", "ringB": "#f07a12", "btn": "#2a55a8", "btnInk": "#ffffff" },
+      "navy": { "dark": true, "bg": "#14254a", "card": "#1f3463", "ink": "#ffffff", "muted": "#bcc8db", "line": "#33497a", "brand": "#ffffff", "accent": "#f2b632", "ringA": "#ffcf5a", "ringB": "#f29b1b", "btn": "#f2b632", "btnInk": "#14254a" }
+    }
+  }
+}

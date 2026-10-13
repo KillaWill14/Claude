@@ -3,20 +3,14 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { runAudit } = require('./lib/audit');
-const { renderReport, esc, bandOf, logoData } = require('./lib/report');
-const LOGO = logoData('color');
+const { renderReport, esc, bandOf } = require('./lib/report');
+const { loadBrand, listBrands, DEFAULT_BRAND } = require('./lib/brand');
+const BRANDS = listBrands().map(loadBrand);
 
 const PORT = Number(process.env.PORT) || 3000;
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data', 'reports');
 fs.mkdirSync(DATA_DIR, { recursive: true });
 
-const agency = {
-  name: process.env.AGENCY_NAME || 'Mid-America Web Solutions',
-  phone: process.env.AGENCY_PHONE || '877-355-5020',
-  email: process.env.AGENCY_EMAIL || 'info@midamericaweb.com',
-  website: process.env.AGENCY_WEBSITE || 'https://midamericaweb.com',
-  bookingUrl: process.env.AGENCY_BOOKING_URL || 'https://midamericaweb.com/contact-us/',
-};
 
 function page(body) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>${body}</body></html>`;
@@ -57,14 +51,15 @@ function listReports(limit = 25) {
     .map(({ f }) => {
       try {
         const a = JSON.parse(fs.readFileSync(path.join(DATA_DIR, f), 'utf8'));
-        return { id: f.replace(/\.json$/, ''), name: a.business.name, domain: a.domain, overall: a.overall, grade: a.grade, createdAt: a.createdAt };
+        return { id: f.replace(/\.json$/, ''), brand: a.brand || DEFAULT_BRAND, name: a.business.name, domain: a.domain, overall: a.overall, grade: a.grade, createdAt: a.createdAt };
       } catch { return null; }
     })
     .filter(Boolean);
 }
 
 function homePage(error = '', values = {}) {
-  const rows = listReports().map(r => `<li><a href="/r/${r.id}"><span class="score s-${bandOf(r.overall).key}">${r.overall}</span><span class="who"><strong>${esc(r.name)}</strong><small>${esc(r.domain)}</small></span><time>${new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</time></a></li>`).join('');
+  const current = loadBrand(values.brand || DEFAULT_BRAND);
+  const rows = listReports().map(r => `<li><a href="/r/${r.id}"><span class="score s-${bandOf(r.overall).key}">${r.overall}</span><span class="who"><strong>${esc(r.name)}</strong><small>${esc(r.domain)}${BRANDS.length > 1 ? ` · ${esc(loadBrand(r.brand).code)}` : ''}</small></span><time>${new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</time></a></li>`).join('');
   const keys = [process.env.GOOGLE_PLACES_API_KEY ? 'Google Places connected' : 'Google Places not connected (enter Google details by hand)', process.env.PAGESPEED_API_KEY ? 'PageSpeed key set' : 'PageSpeed running without a key (may be rate limited)'];
   return page(`<title>Audit Desk</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..900&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
@@ -76,7 +71,7 @@ function homePage(error = '', values = {}) {
 body { margin: 0; background: var(--ground); color: var(--ink); font: 15px/1.5 var(--body); }
 .wrap { max-width: 1040px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 48px; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 24px; align-items: start; }
 header { grid-column: 1 / -1; }
-.logo { height: 52px; width: auto; display: block; margin-bottom: 4px; }
+.logo { width: auto; display: block; margin-bottom: 4px; }
 .brand { font: 800 14px var(--display); font-stretch: 112%; letter-spacing: .04em; text-transform: uppercase; color: var(--brand); display: flex; gap: 8px; align-items: center; }
 .brand i { width: 10px; height: 10px; background: var(--gold); transform: rotate(45deg); }
 h1 { font: 800 clamp(28px, 4vw, 38px)/1.05 var(--display); font-stretch: 110%; margin: 6px 0 4px; }
@@ -110,12 +105,14 @@ time { font: 500 12px var(--mono); color: var(--muted); }
 </style>
 <div class="wrap">
   <header>
-    ${LOGO ? `<img class="logo" src="${LOGO}" alt="${esc(agency.name)}">` : `<div class="brand"><i></i>${esc(agency.name)}</div>`}
+    <img class="logo" id="brand-logo" src="${current.logo('color')}" alt="${esc(current.name)}" style="height:${current.logoHeight.desk}px">
     <h1>Free Website Audit</h1>
     <p>Enter a prospect's website. In about 30–60 seconds you get a scored, customer-ready report you can send as a link or save as a PDF.</p>
   </header>
   <form class="panel fields" method="post" action="/audit" id="audit-form">
     ${error ? `<div class="error" role="alert">${esc(error)}</div>` : ''}
+    ${BRANDS.length > 1 ? `<div><label for="brand">Report branding</label>
+      <select id="brand" name="brand">${BRANDS.map(b => `<option value="${b.key}" data-logo="${b.logo('color')}" data-h="${b.logoHeight.desk}"${b.key === current.key ? ' selected' : ''}>${esc(b.name)}</option>`).join('')}</select></div>` : ''}
     <div class="url"><label for="url">Website</label><input id="url" name="url" required placeholder="examplebusiness.com" value="${esc(values.url || '')}" autocomplete="off"></div>
     <div class="two">
       <div><label for="businessName">Business name <small>optional</small></label><input id="businessName" name="businessName" value="${esc(values.businessName || '')}"></div>
@@ -142,6 +139,11 @@ time { font: 500 12px var(--mono); color: var(--muted); }
   </aside>
 </div>
 <script>
+var brandSel = document.getElementById('brand');
+if (brandSel) brandSel.addEventListener('change', function () {
+  var o = brandSel.options[brandSel.selectedIndex], img = document.getElementById('brand-logo');
+  img.src = o.dataset.logo; img.style.height = o.dataset.h + 'px'; img.alt = o.textContent;
+});
 document.getElementById('audit-form').addEventListener('submit', function () {
   var b = document.getElementById('go'); b.disabled = true; b.textContent = 'Running audit…';
   document.getElementById('working').hidden = false;
@@ -160,7 +162,7 @@ const server = http.createServer(async (req, res) => {
       if (!fs.existsSync(file)) return send(res, 404, page('<p style="font-family:system-ui;padding:24px">This report link is not valid.</p>'));
       const a = JSON.parse(fs.readFileSync(file, 'utf8'));
       if (url.searchParams.get('format') === 'json') return send(res, 200, JSON.stringify(a, null, 2), 'application/json');
-      return send(res, 200, page(renderReport(a, agency)));
+      return send(res, 200, page(renderReport(a, { key: a.brand })));
     }
 
     if (!authorized(req)) return send(res, 401, 'Sign in required', 'text/plain', { 'www-authenticate': 'Basic realm="Audit Desk"' });
@@ -170,7 +172,8 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST' && url.pathname === '/audit') {
       const input = Object.fromEntries(new URLSearchParams(await readBody(req)));
       try {
-        const a = await runAudit(input);
+        const brand = loadBrand(input.brand || DEFAULT_BRAND).key;
+        const a = { ...(await runAudit(input)), brand };
         const slug = a.domain.replace(/[^a-z0-9]+/g, '-').slice(0, 24);
         const id = `${slug}-${crypto.randomBytes(4).toString('hex')}`;
         fs.writeFileSync(path.join(DATA_DIR, `${id}.json`), JSON.stringify(a));

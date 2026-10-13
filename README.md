@@ -1,4 +1,4 @@
-# Audit Desk — Mid-America Web Solutions
+# Audit Desk — Mid-America Web Solutions & Bold Form Marketing
 
 Type in a prospect's website and get a scored, customer-ready audit in about 30–60 seconds. Send the report link or save it as a PDF.
 
@@ -17,6 +17,10 @@ The report also opens with a **Google rating panel** (stars, review count, newes
 
 Every failed or weak item comes with a plain-English explanation and "How we'd fix it" line, and the top six are ranked by impact at the top of the report. Items that could not be checked are marked "Not checked" and left out of the score.
 
+## Brands
+
+Reports and ads can be branded for either agency. Each has a folder in `brands/` with `brand.json` (name, phone, email, website, booking link, colors, fonts, ad palettes and sign-offs) and its logo files (`logo-color.png`, `logo-white.png`, `logo-icon.png`), taken from its website. To change contact details, edit `brand.json` and run `npm run build:skill`. To add a third brand, copy a folder and edit it.
+
 ## Run it
 
 Requires Node.js 18.17 or newer. There are no dependencies to install.
@@ -33,9 +37,7 @@ npm test             # audits a local sample site
 | `GOOGLE_PLACES_API_KEY` | **Recommended.** Looks up the Google Business Profile automatically (rating, review count, newest review, hours, photos, phone match). Without it, enter rating and review count on the form. Enable "Places API (New)" in Google Cloud. |
 | `PAGESPEED_API_KEY` | **Recommended.** Google PageSpeed Insights key (free). Without it, Google rate-limits requests and the speed checks fall back to server response time. |
 | `ADMIN_PASSWORD` | Protects the audit form with a password (any username). Report links stay public so customers can open them. |
-| `AGENCY_NAME` | Defaults to "Mid-America Web Solutions". |
-| `AGENCY_PHONE`, `AGENCY_EMAIL`, `AGENCY_WEBSITE` | Shown in the call-to-action at the bottom of every report. |
-| `AGENCY_BOOKING_URL` | Adds a "Book a free strategy call" button to reports. |
+| `BRAND` | Default brand for new audits and ads: `midamerica` (default) or `boldform`. The Audit Desk form also lets you pick per audit. |
 | `DATA_DIR` | Where reports are saved (default `data/reports`). Use a persistent disk in production. |
 | `PORT` | Default 3000. |
 
@@ -56,7 +58,7 @@ The same engine ships as a Claude skill in `.claude/skills/seo-report/`. Say **"
 
 - **Claude Code:** works automatically in this repo. To use it in every project, copy `.claude/skills/seo-report` to `~/.claude/skills/`.
 - **claude.ai (chat or Cowork):** upload `dist/seo-report.zip` under Settings → Capabilities → Skills. Code execution needs network access to reach websites.
-- **Your contact details:** fill in `.claude/skills/seo-report/agency.json` so every report ends with your phone, email and booking link.
+- **Brand:** say which agency the report is for ("seo report acme.com for Bold Form"); Claude asks if you don't.
 
 The skill keeps its own copy of `lib/`. After changing `lib/`, run `npm run build:skill` to refresh it and the zip; `npm test` fails if they drift apart.
 

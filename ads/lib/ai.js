@@ -30,7 +30,7 @@ const SCHEMA = {
   additionalProperties: false,
 };
 
-const SYSTEM = `You write Facebook and Instagram ad copy for Mid-America Web Solutions, a web design and SEO agency in Belleville, Illinois.
+const systemFor = brand => `You write Facebook and Instagram ad copy for ${brand.name}, ${brand.about}.
 
 The offer: a free website audit. The business owner requests it, and we send a report with an overall score out of 100 plus grades for six areas: Website Health, SEO, AI Optimization (visibility in ChatGPT, Google AI Overviews and similar tools), Local Listings (Google Business Profile), Reviews (Google rating compared with local competitors) and Social Media. It also ranks the top fixes by impact. It is free with no obligation.
 
@@ -61,7 +61,7 @@ function valid(ad) {
 }
 
 // Returns up to `count` validated ads for one industry, or [] if the API is unavailable.
-async function writeAds({ industry, city, count, avoid = [] }) {
+async function writeAds({ brand, industry, city, count, avoid = [] }) {
   const client = new Anthropic();
   const request = `Write ${count} different ads for ${industry.plural}${city ? ` in and around ${city}` : ''}.${avoid.length ? `\nThese hooks were used in earlier batches, so take different angles:\n${avoid.slice(-30).map(h => `- ${h}`).join('\n')}` : ''}`;
   let response;
@@ -72,7 +72,7 @@ async function writeAds({ industry, city, count, avoid = [] }) {
       betas: ['server-side-fallback-2026-07-01'],
       fallbacks: 'default',
       output_config: { effort: 'medium', format: { type: 'json_schema', schema: SCHEMA } },
-      system: SYSTEM,
+      system: systemFor(brand),
       messages: [{ role: 'user', content: request }],
     });
   } catch (err) {

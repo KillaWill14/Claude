@@ -1,0 +1,82 @@
+{
+  "key": "boldform",
+  "name": "Bold Form Marketing",
+  "code": "BFM",
+  "phone": "(314) 582-6416",
+  "email": "sales@boldformmarketing.com",
+  "website": "https://boldformmarketing.com",
+  "bookingUrl": "https://boldformmarketing.com/contact/",
+  "about": "a small, founder-led web design and SEO studio that works with businesses across the U.S.",
+  "colors": {
+    "primary": "#2a1a3d",
+    "accent": "#d9421e",
+    "ground": "#f5f1e8",
+    "ink": "#2a1a3d"
+  },
+  "fonts": {
+    "display": "Space Grotesk",
+    "displayCss": "Space+Grotesk:wght@500;600;700",
+    "fontsource": "space-grotesk",
+    "weights": [
+      500,
+      700
+    ],
+    "headline": "Space Grotesk",
+    "headlineWeight": 500
+  },
+  "logoHeight": {
+    "report": 64,
+    "desk": 72,
+    "ad": 118
+  },
+  "ads": {
+    "link": "https://boldformmarketing.com/contact/",
+    "signoffs": [
+      "Bold Form Marketing | Web design & SEO studio",
+      "From Bold Form, a founder-led web design and SEO studio.",
+      ""
+    ],
+    "palettes": {
+      "cream": {
+        "bg": "#f5f1e8",
+        "card": "#ffffff",
+        "ink": "#2a1a3d",
+        "muted": "#6b5d78",
+        "line": "#e6dfd0",
+        "brand": "#2a1a3d",
+        "accent": "#d9421e",
+        "ringA": "#f2805a",
+        "ringB": "#d9421e",
+        "btn": "#d9421e",
+        "btnInk": "#ffffff"
+      },
+      "purple": {
+        "dark": true,
+        "bg": "#2a1a3d",
+        "card": "#36244d",
+        "ink": "#f5f1e8",
+        "muted": "#cbbfd8",
+        "line": "#4b3768",
+        "brand": "#f5f1e8",
+        "accent": "#ff6a3d",
+        "ringA": "#ff9466",
+        "ringB": "#e04a22",
+        "btn": "#d9421e",
+        "btnInk": "#ffffff"
+      },
+      "white": {
+        "bg": "#ffffff",
+        "card": "#ffffff",
+        "ink": "#2a1a3d",
+        "muted": "#6b5d78",
+        "line": "#ece6f0",
+        "brand": "#2a1a3d",
+        "accent": "#d9421e",
+        "ringA": "#f2805a",
+        "ringB": "#d9421e",
+        "btn": "#2a1a3d",
+        "btnInk": "#f5f1e8"
+      }
+    }
+  }
+}

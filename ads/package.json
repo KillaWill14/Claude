@@ -8,12 +8,15 @@
     "upload": "node upload-meta.js",
     "test": "node test.js"
   },
-  "engines": { "node": ">=18.17" },
+  "engines": {
+    "node": ">=18.17"
+  },
   "dependencies": {
     "@anthropic-ai/sdk": "0.130.0",
     "@fontsource/archivo": "5.1.1",
     "@fontsource/fraunces": "5.1.1",
     "@fontsource/public-sans": "5.1.1",
+    "@fontsource/space-grotesk": "^5.1.1",
     "playwright": "1.56.1"
   }
 }

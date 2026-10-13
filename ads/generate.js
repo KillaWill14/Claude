@@ -1,23 +1,22 @@
 #!/usr/bin/env node
 // Generates a batch of Facebook/Instagram ads for the free website audit.
 //
-//   node generate.js --count 100 [--industries plumbers,roofers | all]
+//   node generate.js --count 100 [--brand midamerica|boldform] [--industries plumbers,roofers | all]
 //     [--cities "Belleville, IL;O'Fallon, IL"] [--sizes square,story]
 //     [--templates scorecard,ring,stand,headline] [--palettes brand,light,navy]
 //     [--ai] [--ai-share 0.5] [--link URL] [--out DIR] [--seed N] [--no-images]
 //
 // Writes ads.csv, ads.json, preview.html and images/ to the output folder, and
-// records every ad in history.jsonl so later batches never repeat one.
+// records every ad in history-<brand>.jsonl so later batches never repeat one.
 
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const C = require('./lib/copy');
-const { buildCreative, SIZES, PALETTES, TEMPLATES } = require('./lib/creative');
+const { buildCreative, palettesFor, SIZES, TEMPLATES } = require('./lib/creative');
+const { loadBrand, DEFAULT_BRAND } = require('../lib/brand');
 
-const HISTORY = process.env.AD_HISTORY || path.join(__dirname, 'history.jsonl');
-const DEFAULT_LINK = process.env.AD_LINK || 'https://midamericaweb.com/contact-us/';
-const AGENCY = { name: process.env.AGENCY_NAME || 'Mid-America Web Solutions' };
+const historyFile = brand => process.env.AD_HISTORY || path.join(__dirname, `history-${brand.key}.jsonl`);
 
 function parseArgs(argv) {
   const out = {};
@@ -50,7 +49,7 @@ function list(value, all, name) {
   return picked;
 }
 
-function readHistory() {
+function readHistory(HISTORY) {
   const keys = new Set();
   const hooks = [];
   if (fs.existsSync(HISTORY)) {
@@ -69,13 +68,13 @@ function csvCell(v) {
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
-function previewPage(ads, sizes) {
-  const iconFile = path.join(__dirname, '..', 'assets', 'logo-icon.png');
-  const ICON = fs.existsSync(iconFile) ? `data:image/png;base64,${fs.readFileSync(iconFile).toString('base64')}` : '';
+function previewPage(ads, sizes, brand) {
+  const ICON = brand.logo('icon') || '';
+  const AGENCY = { name: brand.name };
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const label = { LEARN_MORE: 'Learn more', GET_OFFER: 'Get offer', SIGN_UP: 'Sign up' };
   const img = sizes.includes('square') ? 'image_square' : `image_${sizes[0]}`;
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ad batch preview</title>
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(brand.name)} Ad Batch</title>
 <style>
 :root{--bg:#f0f2f5;--card:#fff;--ink:#1c1e21;--muted:#65676b;--line:#dadde1}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#18191a;--card:#242526;--ink:#e4e6eb;--muted:#b0b3b8;--line:#3e4042;color-scheme:dark}}
@@ -103,22 +102,24 @@ ${a[img] ? `<img class="creative" src="${esc(a[img])}" alt="" loading="lazy">` :
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
+  const brand = loadBrand(args.brand || DEFAULT_BRAND);
+  const HISTORY = historyFile(brand);
   const count = Math.max(1, parseInt(args.count || '20', 10));
   const industryKeys = list(args.industries, C.INDUSTRIES.map(i => i.key), 'industry');
   const industries = industryKeys.map(k => C.INDUSTRIES.find(i => i.key === k));
   const cities = args.cities ? String(args.cities).split(';').map(s => s.trim()).filter(Boolean) : [];
   const sizes = list(args.sizes || 'square,story', Object.keys(SIZES), 'size');
   const templates = list(args.templates, Object.keys(TEMPLATES), 'template');
-  const palettes = list(args.palettes, Object.keys(PALETTES), 'palette');
+  const palettes = list(args.palettes, Object.keys(palettesFor(brand.key)), 'palette');
   const seed = parseInt(args.seed || String(Date.now() % 2147483647), 10);
   const rand = rng(seed);
   const pick = arr => arr[Math.floor(rand() * arr.length)];
-  const link = args.link || DEFAULT_LINK;
+  const link = args.link || process.env.AD_LINK || brand.ads.link;
   const date = new Date().toISOString().slice(0, 10);
-  const outDir = path.resolve(args.out || path.join(__dirname, '..', 'out', 'ads', `${date}-${seed}`));
+  const outDir = path.resolve(args.out || path.join(__dirname, '..', 'out', 'ads', `${brand.key}-${date}-${seed}`));
   fs.mkdirSync(path.join(outDir, 'images'), { recursive: true });
 
-  const history = readHistory();
+  const history = readHistory(HISTORY);
 
   // Optional Claude-written copy, a pool per industry.
   const aiPool = {};
@@ -128,7 +129,7 @@ async function main() {
     const perIndustry = Math.min(25, Math.ceil((count * aiShare) / industries.length) + 2);
     console.log(`Writing fresh copy with ${MODEL} (${perIndustry} per industry)...`);
     await Promise.all(industries.map(async ind => {
-      aiPool[ind.key] = await writeAds({ industry: ind, city: cities.length === 1 ? cities[0] : '', count: perIndustry, avoid: history.hooks });
+      aiPool[ind.key] = await writeAds({ brand, industry: ind, city: cities.length === 1 ? cities[0] : '', count: perIndustry, avoid: history.hooks });
     }));
   }
 
@@ -152,7 +153,7 @@ async function main() {
     }
     if (parts.headline.length > C.LIMITS.headline) parts.headline = 'Free Website Audit';
     if (parts.title.length > C.LIMITS.imageTitle) parts.title = 'Free Website Audit';
-    const signoff = parts.source === 'library' ? pick(C.SIGNOFFS) : '';
+    const signoff = parts.source === 'library' ? pick(brand.ads.signoffs) : '';
     const primary = [parts.hook, parts.offer, parts.closer, signoff].filter(Boolean).join('\n\n');
     if (primary.length > C.LIMITS.primary) continue;
 
@@ -162,7 +163,7 @@ async function main() {
     seen.add(ad.key);
 
     const n = String(ads.length + 1).padStart(3, '0');
-    const id = `${date.replace(/-/g, '')}-${seed.toString(36)}-${n}`;
+    const id = `${brand.code.toLowerCase()}-${date.replace(/-/g, '')}-${seed.toString(36)}-${n}`;
     const template = pick(templates);
     const palette = pick(palettes);
     const score = 38 + Math.floor(rand() * 30);
@@ -170,7 +171,7 @@ async function main() {
     const utm = new URLSearchParams({ utm_source: 'facebook', utm_medium: 'paid_social', utm_campaign: 'free-website-audit', utm_content: id, utm_term: industry.key });
     ads.push({
       id,
-      ad_name: `MAWS | Free Audit | ${industry.Plural}${city ? ` | ${city}` : ''} | ${template}-${palette} | ${id}`,
+      ad_name: `${brand.code} | Free Audit | ${industry.Plural}${city ? ` | ${city}` : ''} | ${template}-${palette} | ${id}`,
       ...ad,
       hook: parts.hook,
       cta: pick(C.CTAS),
@@ -189,7 +190,7 @@ async function main() {
       for (const [i, ad] of ads.entries()) {
         for (const size of sizes) {
           const rel = `images/${ad.id}-${size}.png`;
-          const html = buildCreative({ template: ad.template, palette: ad.palette, size, title: ad.image_title, sub: ad.image_sub, score: ad.score, catScores: ad.catScores, agency: AGENCY });
+          const html = buildCreative({ brand: brand.key, template: ad.template, palette: ad.palette, size, title: ad.image_title, sub: ad.image_sub, score: ad.score, catScores: ad.catScores});
           await renderer.render(html, size, path.join(outDir, rel));
           ad[`image_${size}`] = rel;
         }
@@ -203,11 +204,11 @@ async function main() {
   const cols = ['id', 'ad_name', 'industry', 'city', 'primary_text', 'headline', 'description', 'cta', 'link', 'image_square', 'image_portrait', 'image_story', 'template', 'palette', 'copy_source'];
   fs.writeFileSync(path.join(outDir, 'ads.csv'), [cols.join(','), ...ads.map(a => cols.map(c => csvCell(a[c])).join(','))].join('\n') + '\n');
   fs.writeFileSync(path.join(outDir, 'ads.json'), JSON.stringify(ads, null, 2));
-  fs.writeFileSync(path.join(outDir, 'preview.html'), previewPage(ads, sizes));
+  fs.writeFileSync(path.join(outDir, 'preview.html'), previewPage(ads, sizes, brand));
   fs.appendFileSync(HISTORY, ads.map(a => JSON.stringify({ key: a.key, id: a.id, hook: a.hook, date })).join('\n') + (ads.length ? '\n' : ''));
 
   const bySource = ads.reduce((m, a) => ({ ...m, [a.copy_source]: (m[a.copy_source] || 0) + 1 }), {});
-  console.log(`Created ${ads.length} ads (${Object.entries(bySource).map(([k, v]) => `${v} ${k}`).join(', ')}) in ${outDir}`);
+  console.log(`${brand.name}: created ${ads.length} ads (${Object.entries(bySource).map(([k, v]) => `${v} ${k}`).join(', ')}) in ${outDir}`);
   console.log(`  Review: ${path.join(outDir, 'preview.html')}`);
   console.log(`  Upload: ${path.join(outDir, 'ads.csv')}`);
 }

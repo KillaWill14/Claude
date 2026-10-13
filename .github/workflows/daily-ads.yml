@@ -2,11 +2,13 @@
 # spreadsheet as a downloadable artifact, and (when Meta secrets are set)
 # uploads them to your ad set as PAUSED ads for review.
 #
-# Repository settings used:
-#   Secrets:   ANTHROPIC_API_KEY (fresh Claude copy), META_ACCESS_TOKEN,
-#              META_AD_ACCOUNT_ID, META_PAGE_ID, META_LEAD_FORM_ID (optional)
-#   Variables: AD_DAILY_COUNT (default 100), AD_INDUSTRIES (default all),
-#              AD_CITIES (e.g. "Belleville, IL;O'Fallon, IL"), AD_LINK, META_ADSET_ID
+# Runs once per brand. Settings ending in _MIDAMERICA or _BOLDFORM apply to that brand only.
+#   Secrets:   ANTHROPIC_API_KEY (fresh Claude copy, shared)
+#              META_ACCESS_TOKEN_<BRAND>, META_AD_ACCOUNT_ID_<BRAND>, META_PAGE_ID_<BRAND>,
+#              META_LEAD_FORM_ID_<BRAND> (optional)
+#   Variables: AD_BRANDS_ENABLED (e.g. "midamerica,boldform"; default midamerica only),
+#              AD_DAILY_COUNT (default 100), AD_INDUSTRIES (default all),
+#              AD_CITIES_<BRAND> (e.g. "Belleville, IL;O'Fallon, IL"), META_ADSET_ID_<BRAND>
 name: Daily ad batch
 
 on:
@@ -17,6 +19,11 @@ on:
       count:
         description: How many ads
         default: '100'
+      brand:
+        description: Brand
+        type: choice
+        options: [midamerica, boldform]
+        default: midamerica
       industries:
         description: Industries (comma separated, or all)
         default: all
@@ -29,7 +36,26 @@ permissions:
   contents: write
 
 jobs:
+  brands:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.pick.outputs.matrix }}
+    steps:
+      - id: pick
+        # Manual runs build the chosen brand; scheduled runs build every enabled brand.
+        env:
+          CHOSEN: ${{ github.event_name == 'workflow_dispatch' && inputs.brand || vars.AD_BRANDS_ENABLED || 'midamerica' }}
+        run: |
+          json=$(echo "$CHOSEN" | tr ',' '\n' | sed 's/ //g' | grep -E '^(midamerica|boldform)$' \
+            | awk '{printf "%s{\"brand\":\"%s\",\"suffix\":\"%s\"}", (NR>1?",":""), $1, toupper($1)}')
+          echo "matrix={\"include\":[$json]}" >> "$GITHUB_OUTPUT"
+
   generate:
+    needs: brands
+    strategy:
+      fail-fast: false
+      max-parallel: 1 # one brand at a time, so the history commits don't race
+      matrix: ${{ fromJSON(needs.brands.outputs.matrix) }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     defaults:
@@ -47,30 +73,29 @@ jobs:
       - name: Generate ads
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          AD_LINK: ${{ vars.AD_LINK }}
         run: |
-          node generate.js \
+          node generate.js --brand "${{ matrix.brand }}" \
             --count "${{ inputs.count || vars.AD_DAILY_COUNT || '100' }}" \
             --industries "${{ inputs.industries || vars.AD_INDUSTRIES || 'all' }}" \
-            --cities "${{ vars.AD_CITIES }}" \
+            --cities "${{ vars[format('AD_CITIES_{0}', matrix.suffix)] }}" \
             --ai --ai-share 0.6 \
             --out ../out/ads/batch
       - uses: actions/upload-artifact@v4
         with:
-          name: ads-${{ github.run_number }}
+          name: ads-${{ matrix.brand }}-${{ github.run_number }}
           path: out/ads/batch
           retention-days: 30
       - name: Upload to Meta (paused)
         if: ${{ github.event_name == 'schedule' || inputs.upload }}
         env:
-          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
-          META_AD_ACCOUNT_ID: ${{ secrets.META_AD_ACCOUNT_ID }}
-          META_PAGE_ID: ${{ secrets.META_PAGE_ID }}
-          META_LEAD_FORM_ID: ${{ secrets.META_LEAD_FORM_ID }}
-          ADSET: ${{ vars.META_ADSET_ID }}
+          META_ACCESS_TOKEN: ${{ secrets[format('META_ACCESS_TOKEN_{0}', matrix.suffix)] }}
+          META_AD_ACCOUNT_ID: ${{ secrets[format('META_AD_ACCOUNT_ID_{0}', matrix.suffix)] }}
+          META_PAGE_ID: ${{ secrets[format('META_PAGE_ID_{0}', matrix.suffix)] }}
+          META_LEAD_FORM_ID: ${{ secrets[format('META_LEAD_FORM_ID_{0}', matrix.suffix)] }}
+          ADSET: ${{ vars[format('META_ADSET_ID_{0}', matrix.suffix)] }}
         run: |
           if [ -z "$META_ACCESS_TOKEN" ] || [ -z "$ADSET" ]; then
-            echo "Meta secrets or META_ADSET_ID not set; skipping upload."
+            echo "Meta settings for ${{ matrix.brand }} not set; skipping upload."
           else
             node upload-meta.js ../out/ads/batch --adset "$ADSET" --live
           fi
@@ -78,6 +103,7 @@ jobs:
         run: |
           git config user.name "ad-batch-bot"
           git config user.email "ad-batch-bot@users.noreply.github.com"
-          git add history.jsonl
-          git commit -m "Record ad batch ${{ github.run_number }}" || echo "Nothing to record"
+          git add "history-${{ matrix.brand }}.jsonl"
+          git commit -m "Record ${{ matrix.brand }} ad batch ${{ github.run_number }}" || echo "Nothing to record"
+          git pull --rebase --autostash
           git push
