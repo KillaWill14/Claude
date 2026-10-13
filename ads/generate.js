@@ -87,7 +87,7 @@ header{padding:20px 16px 4px;max-width:1300px;margin:auto}h1{margin:0;font-size:
 .top{display:flex;gap:8px;align-items:center;padding:12px 12px 0}.av{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:#fff;object-fit:cover;flex:none}
 .top b{display:block}.top small{color:var(--muted)}
 .txt{padding:8px 12px 12px;white-space:pre-line}
-.ad img{width:100%;display:block;border-block:1px solid var(--line)}
+.ad .creative{width:100%;display:block;border-block:1px solid var(--line)}
 .foot{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg)}
 .foot div{min-width:0}.foot small{color:var(--muted);text-transform:uppercase;font-size:11px}.foot strong{display:block}.foot span{color:var(--muted)}
 .cta{background:var(--line);border-radius:6px;padding:8px 12px;font-weight:600;white-space:nowrap}
@@ -95,7 +95,7 @@ header{padding:20px 16px 4px;max-width:1300px;margin:auto}h1{margin:0;font-size:
 </style></head><body><header><h1>${ads.length} ads</h1><p>Generated ${new Date().toLocaleString('en-US')}. This is how each ad will look in the Facebook feed.</p></header><div class="grid">
 ${ads.map(a => `<article class="ad"><div class="top"><img class="av" src="${ICON}" alt=""><div><b>${esc(AGENCY.name)}</b><small>Sponsored</small></div></div>
 <div class="txt">${esc(a.primary_text)}</div>
-${a[img] ? `<img src="${esc(a[img])}" alt="" loading="lazy">` : ''}
+${a[img] ? `<img class="creative" src="${esc(a[img])}" alt="" loading="lazy">` : ''}
 <div class="foot"><div><small>${esc(new URL(a.link).hostname)}</small><strong>${esc(a.headline)}</strong><span>${esc(a.description)}</span></div><span class="cta">${label[a.cta]}</span></div>
 <div class="meta">${esc(a.id)} · ${esc(a.industry)}${a.city ? ` · ${esc(a.city)}` : ''} · ${esc(a.template)}/${esc(a.palette)} · ${a.copy_source}</div></article>`).join('\n')}
 </div></body></html>`;
