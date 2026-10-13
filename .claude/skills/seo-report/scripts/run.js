@@ -2,7 +2,8 @@
 // Runs a Mid-America Web Solutions audit and writes the report files.
 //
 //   node run.js <website> [--city "Wichita, KS"] [--name "Business"] [--rating 4.6]
-//     [--reviews 37] [--profile yes|no] [--newest-review-days 12]
+//     [--reviews 37] [--profile yes|no] [--newest-review-days 12] [--maps-url URL]
+//     [--competitor "Name | 4.7 | 212"] (repeat for up to three competitors)
 //     [--pagespeed psi.json] [--pages DIR] [--out DIR]
 //
 // --pages DIR audits pages you fetched yourself instead of fetching them here.
@@ -23,7 +24,10 @@ function parseArgs(argv) {
       const key = a.slice(2);
       const next = argv[i + 1];
       if (next === undefined || next.startsWith('--')) out[key] = true;
-      else { out[key] = next; i++; }
+      else {
+        out[key] = key === 'competitor' ? [...(out[key] || []), next] : next;
+        i++;
+      }
     } else out._.push(a);
   }
   return out;
@@ -69,6 +73,8 @@ async function main() {
     googleReviews: args.reviews || '',
     hasProfile: args.profile || '',
     newestReviewDays: args['newest-review-days'] || '',
+    mapsUrl: typeof args['maps-url'] === 'string' ? args['maps-url'] : '',
+    competitors: (args.competitor || []).join('\n'),
   };
   const opts = {};
   if (args.pagespeed) opts.pagespeed = parsePagespeed(JSON.parse(fs.readFileSync(args.pagespeed, 'utf8')));
@@ -107,6 +113,7 @@ async function main() {
   console.log(`${a.business.name} (${a.domain})`);
   console.log(`Overall: ${a.overall}/100, grade ${a.grade}   [${a.counts.fail} problems, ${a.counts.warn} to improve, ${a.counts.pass} passed]`);
   console.log(line);
+  if (a.google?.rating != null) console.log(`Google: ${a.google.rating} stars, ${a.google.reviewCount} reviews${a.competitors.length ? ` | competitors: ${a.competitors.map(c => `${c.name} ${c.rating}/${c.reviewCount}`).join(', ')}` : ''}`);
   for (const c of a.categories) console.log(`${c.name.padEnd(18)} ${String(c.score ?? '--').padStart(3)}${c.unverified ? `   (${c.unverified} not checked)` : ''}`);
   console.log(line);
   console.log('Top fixes:');

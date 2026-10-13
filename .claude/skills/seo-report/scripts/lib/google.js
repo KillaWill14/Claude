@@ -62,6 +62,7 @@ async function findPlace({ query, domain, key }) {
     const reviewTimes = (p.reviews || []).map(r => Date.parse(r.publishTime)).filter(Boolean);
     return {
       found: true,
+      id: p.id,
       websiteMatches: Boolean(match),
       name: p.displayName?.text || '',
       category: p.primaryTypeDisplayName?.text || '',
@@ -81,4 +82,26 @@ async function findPlace({ query, domain, key }) {
   }
 }
 
-module.exports = { pagespeed, parsePagespeed, findPlace, hostOf };
+// Top local competitors on Google Maps for the same kind of business, most-reviewed first.
+async function findCompetitors({ category, city, excludeId, key }) {
+  if (!key || !category || !city) return [];
+  try {
+    const res = await fetch('https://places.googleapis.com/v1/places:searchText', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': 'places.id,places.displayName,places.rating,places.userRatingCount,places.googleMapsUri' },
+      body: JSON.stringify({ textQuery: `${category} in ${city}`, pageSize: 10 }),
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!res.ok) return [];
+    const { places = [] } = await res.json();
+    return places
+      .filter(p => p.id !== excludeId && p.rating != null)
+      .map(p => ({ name: p.displayName?.text || '', rating: p.rating, reviewCount: p.userRatingCount ?? 0, mapsUrl: p.googleMapsUri || '' }))
+      .sort((a, b) => b.reviewCount - a.reviewCount)
+      .slice(0, 3);
+  } catch {
+    return [];
+  }
+}
+
+module.exports = { pagespeed, parsePagespeed, findPlace, findCompetitors, hostOf };

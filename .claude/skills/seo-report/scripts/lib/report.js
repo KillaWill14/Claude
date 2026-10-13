@@ -35,6 +35,48 @@ function headline(a) {
 }
 
 // opts.toolbar = false drops the copy-link and PDF buttons (for artifact pages, where printing is unavailable).
+function stars(rating, big) {
+  const pct = Math.max(0, Math.min(100, (rating / 5) * 100));
+  return `<span class="stars${big ? ' stars-big' : ''}" role="img" aria-label="${rating.toFixed(1)} out of 5 stars"><span class="stars-base">★★★★★</span><span class="stars-fill" style="width:${pct.toFixed(1)}%">★★★★★</span></span>`;
+}
+
+// The Google rating panel, plus a comparison with local competitors when we have them.
+function googlePanel(a) {
+  const g = a.google || {};
+  const name = a.business.name;
+  const listing = g.mapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([name, a.business.city].filter(Boolean).join(' '))}`;
+  if (g.found === false) {
+    return `<section class="gpanel gpanel-missing">
+      <div><p class="eyebrow">Google rating</p><h3>No Google Business Profile found</h3>
+      <p>When people search for your services nearby, Google shows a map with three businesses, their star ratings and a call button. Without a profile, ${esc(name)} cannot appear there, and that is where most local calls come from.</p></div>
+    </section>`;
+  }
+  if (g.rating == null) return '';
+  const comps = a.competitors || [];
+  const rows = [{ name, rating: g.rating, reviewCount: g.reviewCount ?? 0, you: true }, ...comps].sort((x, y) => y.reviewCount - x.reviewCount);
+  const max = Math.max(1, ...rows.map(r => r.reviewCount));
+  const compare = comps.length ? `<div class="compare">
+      <p class="eyebrow">How you compare on Google</p>
+      <ul>${rows.map(r => `<li class="${r.you ? 'you' : ''}">
+        <div class="c-name"><span>${esc(r.name)}</span>${r.you ? '<b>You</b>' : ''}</div>
+        <div class="c-rating">${stars(r.rating)}<span>${r.rating.toFixed(1)}</span></div>
+        <div class="c-count"><span class="c-bar"><span style="width:${((r.reviewCount / max) * 100).toFixed(1)}%"></span></span><span class="c-num">${r.reviewCount.toLocaleString('en-US')}</span></div>
+      </li>`).join('')}</ul>
+      <p class="c-note">Review counts from Google Maps on the date of this report.</p>
+    </div>` : '';
+  const newest = g.newestReviewDays != null ? `<p class="g-meta">Newest review: ${g.newestReviewDays === 0 ? 'today' : `${g.newestReviewDays} day${g.newestReviewDays === 1 ? '' : 's'} ago`}</p>` : '';
+  return `<section class="gpanel${comps.length ? '' : ' gpanel-solo'}">
+    <div class="g-own">
+      <p class="eyebrow">Google rating</p>
+      <div class="g-score"><span class="g-num">${Number(g.rating).toFixed(1)}</span>${stars(Number(g.rating), true)}</div>
+      <p class="g-count">${(g.reviewCount ?? 0).toLocaleString('en-US')} Google reviews</p>
+      ${newest}
+      <a class="g-link" href="${esc(listing)}">See the listing on Google</a>
+    </div>
+    ${compare}
+  </section>`;
+}
+
 function renderReport(a, agency = {}, opts = {}) {
   const date = new Date(a.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   const overallBand = bandOf(a.overall);
@@ -173,6 +215,34 @@ h2 { font: 800 24px/1.15 var(--display); font-stretch: 105%; margin: 36px 0 4px;
 .cta .contact { display: flex; flex-wrap: wrap; gap: 6px 20px; font-weight: 700; font-size: 17px; }
 .cta a { color: var(--brand-ink); }
 .cta .book { justify-self: start; background: var(--gold); color: var(--ink); font: 800 15px var(--display); padding: 12px 18px; border-radius: 6px; text-decoration: none; }
+.gpanel { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 24px; display: grid; grid-template-columns: minmax(0, 230px) minmax(0, 1fr); gap: 28px; align-items: start; }
+.gpanel-solo { grid-template-columns: minmax(0, 1fr); }
+.gpanel-missing { border-color: var(--bad); background: var(--bad-bg); grid-template-columns: minmax(0, 1fr); }
+.gpanel-missing h3 { font: 800 22px var(--display); margin: 0 0 6px; color: var(--bad); }
+.gpanel-missing p:last-child { margin: 0; max-width: 70ch; }
+.g-score { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.g-num { font: 800 56px/1 var(--display); font-variant-numeric: tabular-nums; }
+.g-count { font-weight: 700; font-size: 16px; margin: 8px 0 2px; }
+.g-meta { color: var(--muted); margin: 0 0 10px; }
+.g-link { font-weight: 600; }
+.stars { position: relative; display: inline-block; line-height: 1; font-size: 15px; letter-spacing: 1px; white-space: nowrap; }
+.stars-big { font-size: 24px; letter-spacing: 2px; }
+.stars-base { color: var(--line); }
+.stars-fill { position: absolute; inset: 0 auto 0 0; overflow: hidden; color: var(--gold); }
+.compare ul { list-style: none; margin: 0; padding: 0; }
+.compare li { display: grid; grid-template-columns: minmax(0, 1.4fr) auto minmax(0, 1fr); gap: 14px; align-items: center; padding: 9px 10px; border-top: 1px solid var(--line); }
+.compare li:first-child { border-top: 0; }
+.compare li.you { background: var(--fair-bg); border-radius: 6px; border-top-color: transparent; }
+.compare li.you + li { border-top-color: transparent; }
+.c-name { display: flex; gap: 8px; align-items: center; min-width: 0; font-weight: 600; }
+.c-name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.c-name b { font: 600 10px var(--mono); text-transform: uppercase; letter-spacing: .06em; background: var(--brand); color: var(--brand-ink); padding: 2px 6px; border-radius: 3px; flex: none; }
+.c-rating { display: flex; gap: 6px; align-items: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+.c-count { display: flex; gap: 8px; align-items: center; }
+.c-bar { flex: 1; height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.c-bar span { display: block; height: 100%; background: var(--brand); border-radius: 99px; }
+.c-num { font: 500 13px var(--mono); min-width: 4ch; text-align: right; }
+.c-note { color: var(--muted); font-size: 12.5px; margin: 8px 0 0; }
 .method { color: var(--muted); font-size: 12.5px; padding-block: 8px 40px; max-width: 80ch; }
 @media (max-width: 760px) {
   .hero { grid-template-columns: 1fr; justify-items: start; padding: 20px; }
@@ -180,13 +250,16 @@ h2 { font: 800 24px/1.15 var(--display); font-stretch: 105%; margin: 36px 0 4px;
   .grid { grid-template-columns: minmax(0, 1fr); }
   .row { grid-template-columns: minmax(0, 1fr); gap: 6px; }
   .row-title { flex-direction: column; gap: 0; }
+  .gpanel { grid-template-columns: minmax(0, 1fr); padding: 18px; }
+  .compare li { grid-template-columns: minmax(0, 1fr) auto; }
+  .c-count { grid-column: 1 / -1; }
 }
 @media (min-width: 761px) and (max-width: 900px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media print {
   body { background: #fff; font-size: 12px; }
   .toolbar { display: none; }
-  .letterhead, .cta, .priorities li::before, .fill, .g-good, .g-fair, .g-weak, .g-bad, .pill { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .detail, .priorities li, .cat { break-inside: avoid; }
+  .letterhead, .cta, .stars-fill, .c-bar span, .compare li.you, .c-name b, .priorities li::before, .fill, .g-good, .g-fair, .g-weak, .g-bad, .pill { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .detail, .priorities li, .cat, .gpanel { break-inside: avoid; }
 }
 </style>
 <div class="letterhead"><div class="wrap">
@@ -212,6 +285,8 @@ h2 { font: 800 24px/1.15 var(--display); font-stretch: 105%; margin: 36px 0 4px;
       <dl class="facts">${facts}</dl>
     </div>
   </section>
+
+  ${googlePanel(a)}
 
   <h2>Your scorecard</h2>
   <p class="section-sub">Each area is scored from 0 to 100. Your overall score weights them by how much each one drives calls and leads for a local business.</p>

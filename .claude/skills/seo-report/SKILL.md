@@ -17,23 +17,28 @@ From the user's message take:
 
 If the user asks for several reports at once, do the steps below for each site.
 
-## 2. Look up the Google Business Profile
+## 2. Look up Google ratings
 
-The Local Listings and Reviews scores depend on Google data. Skip this step only when `GOOGLE_PLACES_API_KEY` is set in the environment (the script then looks it up itself).
+The report opens with a Google rating panel (stars, review count, newest review, link to the listing) and a "How you compare on Google" chart against local competitors. The Local Listings and Reviews scores also depend on this data, so do this step every time. Skip it only when `GOOGLE_PLACES_API_KEY` is set in the environment; the script then looks up the business and its top three competitors itself.
 
-Search the web for `"<business name>" <city> reviews` and similar. From Google results, the Google Maps listing, or a reliable aggregator, note:
+**The prospect.** Search the web for the business name with its city and words like "reviews" or "Google", and try a second wording if the first finds nothing. Google's own results and the Google Maps listing usually show the rating and count together, like "4.6 ★ (37)". Note:
 - whether a Google Business Profile exists → `--profile yes` or `--profile no`
 - star rating → `--rating 4.6`
 - number of Google reviews → `--reviews 37`
 - age in days of the newest review, if you can see it → `--newest-review-days 12`
+- the Google Maps link for the listing, if you have it → `--maps-url "https://maps.google.com/..."`
 
-Use only numbers you actually saw. Never estimate or carry over numbers from another business. If you cannot find something, leave that flag out; the report marks it "Not checked" and keeps it out of the score. Pass `--profile no` only when you searched properly and found no listing.
+**Competitors.** Search for the business's main service in its city (for example "plumber Salina KS"). From the Google results or Maps, take the three best-known competitors that show a Google rating and review count, and pass each one:
+`--competitor "Smith Plumbing | 4.8 | 212"`. Leave out the prospect itself, national chains with no local office, and directories.
+
+Use only numbers you actually saw, and only Google ratings (not Yelp, Facebook or BBB). Never estimate or carry over numbers from another business. If you cannot find something, leave that flag out; the report marks it "Not checked" and keeps it out of the score, and the comparison chart only appears when you pass at least one competitor. Pass `--profile no` only when you searched properly and found no listing; the report then shows a "No Google Business Profile found" panel.
 
 ## 3. Run the audit
 
 ```bash
 node SKILL_DIR/scripts/run.js <website> --city "City, ST" --name "Business Name" \
-  --rating 4.6 --reviews 37 --profile yes --out <output folder>
+  --rating 4.6 --reviews 37 --profile yes --maps-url "<listing link>" \
+  --competitor "Name | 4.8 | 212" --competitor "Name | 4.5 | 96" --out <output folder>
 ```
 
 Use the scratchpad or outputs folder for `--out` when you have one, otherwise the current folder. Node 18 or newer is required; no packages need installing. It takes 30–90 seconds because it also runs Google PageSpeed. Set `PAGESPEED_API_KEY` if available to avoid Google rate limits; without it the speed checks may fall back to server response time.
@@ -62,7 +67,7 @@ Never edit scores or findings by hand. If something looks wrong (for example the
 
 Keep it short:
 1. The report link (or file).
-2. Overall score and grade, then the six category scores in one compact list.
+2. Overall score and grade, the Google rating with review count (and how it compares with the competitors), then the six category scores in one compact list.
 3. The top three fixes in one line each.
 4. Any gaps: items "Not checked", Google data you could not find, or a missing PageSpeed result.
 5. A ready-to-send message to the prospect, 3–4 sentences, plain and friendly, that names one or two specific findings and offers a call. Example tone: "Hi Dana, I ran a free audit of prairiecreekplumbing.com. You're getting good reviews, but Google can't tell what city you serve and AI tools like ChatGPT are blocked from reading your site. The full report is here: <link>. Happy to walk you through it in 15 minutes this week."

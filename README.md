@@ -11,6 +11,8 @@ The report gives an **overall score (0–100, A–F grade)** plus six category s
 | AI Optimization | 15% | AI crawlers (GPTBot, ClaudeBot, PerplexityBot, Google-Extended…) allowed, content readable without JavaScript, schema markup, LocalBusiness identity, FAQ content, llms.txt, `sameAs` profiles |
 | Local Listings | 20% | Google Business Profile found, phone match with Google, website link, hours, photos, open status, phone and address on site, local schema, map link |
 | Reviews | 15% | Google rating, review count, newest review age, reviews on site, review schema, "leave a review" link |
+
+The report also opens with a **Google rating panel** (stars, review count, newest review, link to the listing) and a **"How you compare on Google"** chart against the top three local competitors. With `GOOGLE_PLACES_API_KEY` set, the competitors are found automatically; otherwise type them into the form as `Name | rating | reviews`, one per line.
 | Social Media | 10% | Facebook, Instagram and other profiles, Open Graph share preview, Twitter card, Meta Pixel, social profiles in schema |
 
 Every failed or weak item comes with a plain-English explanation and "How we'd fix it" line, and the top six are ranked by impact at the top of the report. Items that could not be checked are marked "Not checked" and left out of the score.

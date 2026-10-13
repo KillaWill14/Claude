@@ -82,8 +82,8 @@ header p { margin: 0; color: var(--muted); max-width: 60ch; }
 .panel { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 20px; }
 label { display: block; font-weight: 600; margin-bottom: 4px; }
 label small { font-weight: 400; color: var(--muted); }
-input, select { width: 100%; font: 15px var(--body); padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--ground); color: var(--ink); }
-input:focus, select:focus, button:focus-visible { outline: 3px solid var(--gold); outline-offset: 1px; }
+input, select, textarea { width: 100%; font: 15px var(--body); padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--ground); color: var(--ink); }
+input:focus, select:focus, textarea:focus, button:focus-visible { outline: 3px solid var(--gold); outline-offset: 1px; }
 .url input { font-size: 18px; padding: 14px; }
 .fields { display: grid; gap: 14px; }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -125,6 +125,8 @@ time { font: 500 12px var(--mono); color: var(--muted); }
         <div><label for="googleRating">Star rating</label><input id="googleRating" name="googleRating" inputmode="decimal" placeholder="4.6" value="${esc(values.googleRating || '')}"></div>
         <div><label for="googleReviews">Review count</label><input id="googleReviews" name="googleReviews" inputmode="numeric" placeholder="37" value="${esc(values.googleReviews || '')}"></div>
       </div>
+      <div><label for="competitors">Top competitors <small>one per line: Name | rating | reviews</small></label>
+        <textarea id="competitors" name="competitors" rows="3" placeholder="Smith Plumbing | 4.8 | 212">${esc(values.competitors || '')}</textarea></div>
       <div><label for="hasProfile">Has a Google Business Profile?</label>
         <select id="hasProfile" name="hasProfile"><option value="">Not sure</option><option value="yes"${values.hasProfile === 'yes' ? ' selected' : ''}>Yes</option><option value="no"${values.hasProfile === 'no' ? ' selected' : ''}>No</option></select></div>
     </fieldset>
