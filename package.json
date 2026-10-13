@@ -1,0 +1,12 @@
+{
+  "name": "mid-america-audit-desk",
+  "version": "1.0.0",
+  "description": "Free website audit tool for Mid-America Web Solutions: scores a prospect's website, SEO, AI optimization, local listings, reviews and social media, and produces a customer-ready report.",
+  "main": "server.js",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test/smoke.js"
+  },
+  "engines": { "node": ">=18.17" }
+}
