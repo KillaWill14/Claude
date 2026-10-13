@@ -3,7 +3,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { runAudit } = require('./lib/audit');
-const { renderReport, esc, bandOf } = require('./lib/report');
+const { renderReport, esc, bandOf, logoData } = require('./lib/report');
+const LOGO = logoData('color');
 
 const PORT = Number(process.env.PORT) || 3000;
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data', 'reports');
@@ -68,13 +69,14 @@ function homePage(error = '', values = {}) {
   return page(`<title>Audit Desk</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..900&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
-:root { --ground: #f2f5f8; --paper: #fff; --ink: #13233a; --muted: #5a6b80; --line: #dde4ec; --brand: #1d4e89; --gold: #d9a21b; --good: #1f8a5b; --fair: #b7860b; --weak: #d26a12; --bad: #c4352b; --err-bg: #fbe6e4;
+:root { --ground: #f2f5f8; --paper: #fff; --ink: #13233a; --muted: #5a6b80; --line: #dde4ec; --brand: #1f3d7b; --gold: #d9a21b; --good: #1f8a5b; --fair: #b7860b; --weak: #d26a12; --bad: #c4352b; --err-bg: #fbe6e4;
   --display: "Archivo", "Arial Narrow", system-ui, sans-serif; --body: "Public Sans", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace; color-scheme: light; }
 @media (prefers-color-scheme: dark) { :root { --ground: #0f1724; --paper: #172234; --ink: #e8eef6; --muted: #9aaabd; --line: #2a3a52; --brand: #6ea2e6; --err-bg: #3a1f22; color-scheme: dark; } }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--ground); color: var(--ink); font: 15px/1.5 var(--body); }
 .wrap { max-width: 1040px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 48px; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 24px; align-items: start; }
 header { grid-column: 1 / -1; }
+.logo { height: 52px; width: auto; display: block; margin-bottom: 4px; }
 .brand { font: 800 14px var(--display); font-stretch: 112%; letter-spacing: .04em; text-transform: uppercase; color: var(--brand); display: flex; gap: 8px; align-items: center; }
 .brand i { width: 10px; height: 10px; background: var(--gold); transform: rotate(45deg); }
 h1 { font: 800 clamp(28px, 4vw, 38px)/1.05 var(--display); font-stretch: 110%; margin: 6px 0 4px; }
@@ -108,7 +110,7 @@ time { font: 500 12px var(--mono); color: var(--muted); }
 </style>
 <div class="wrap">
   <header>
-    <div class="brand"><i></i>${esc(agency.name)}</div>
+    ${LOGO ? `<img class="logo" src="${LOGO}" alt="${esc(agency.name)}">` : `<div class="brand"><i></i>${esc(agency.name)}</div>`}
     <h1>Free Website Audit</h1>
     <p>Enter a prospect's website. In about 30–60 seconds you get a scored, customer-ready report you can send as a link or save as a PDF.</p>
   </header>

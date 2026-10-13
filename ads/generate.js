@@ -70,6 +70,8 @@ function csvCell(v) {
 }
 
 function previewPage(ads, sizes) {
+  const iconFile = path.join(__dirname, '..', 'assets', 'logo-icon.png');
+  const ICON = fs.existsSync(iconFile) ? `data:image/png;base64,${fs.readFileSync(iconFile).toString('base64')}` : '';
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const label = { LEARN_MORE: 'Learn more', GET_OFFER: 'Get offer', SIGN_UP: 'Sign up' };
   const img = sizes.includes('square') ? 'image_square' : `image_${sizes[0]}`;
@@ -82,7 +84,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.4 system-ui,-app
 header{padding:20px 16px 4px;max-width:1300px;margin:auto}h1{margin:0;font-size:22px}header p{color:var(--muted);margin:4px 0 0}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;padding:16px;max-width:1300px;margin:auto}
 .ad{background:var(--card);border-radius:8px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.2);display:flex;flex-direction:column;min-width:0}
-.top{display:flex;gap:8px;align-items:center;padding:12px 12px 0}.av{width:36px;height:36px;border-radius:50%;background:#1d4e89;flex:none}
+.top{display:flex;gap:8px;align-items:center;padding:12px 12px 0}.av{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:#fff;object-fit:cover;flex:none}
 .top b{display:block}.top small{color:var(--muted)}
 .txt{padding:8px 12px 12px;white-space:pre-line}
 .ad img{width:100%;display:block;border-block:1px solid var(--line)}
@@ -91,7 +93,7 @@ header{padding:20px 16px 4px;max-width:1300px;margin:auto}h1{margin:0;font-size:
 .cta{background:var(--line);border-radius:6px;padding:8px 12px;font-weight:600;white-space:nowrap}
 .meta{padding:6px 12px 10px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
 </style></head><body><header><h1>${ads.length} ads</h1><p>Generated ${new Date().toLocaleString('en-US')}. This is how each ad will look in the Facebook feed.</p></header><div class="grid">
-${ads.map(a => `<article class="ad"><div class="top"><span class="av"></span><div><b>${esc(AGENCY.name)}</b><small>Sponsored</small></div></div>
+${ads.map(a => `<article class="ad"><div class="top"><img class="av" src="${ICON}" alt=""><div><b>${esc(AGENCY.name)}</b><small>Sponsored</small></div></div>
 <div class="txt">${esc(a.primary_text)}</div>
 ${a[img] ? `<img src="${esc(a[img])}" alt="" loading="lazy">` : ''}
 <div class="foot"><div><small>${esc(new URL(a.link).hostname)}</small><strong>${esc(a.headline)}</strong><span>${esc(a.description)}</span></div><span class="cta">${label[a.cta]}</span></div>

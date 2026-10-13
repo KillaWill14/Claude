@@ -12,9 +12,10 @@ const SIZES = {
 };
 
 const PALETTES = {
-  brand: { bg: '#eef3f8', card: '#ffffff', ink: '#13233a', muted: '#5a6b80', line: '#dde4ec', brand: '#1d4e89', accent: '#d9a21b', ringA: '#f4a51c', ringB: '#e0711a', btn: '#1d4e89', btnInk: '#ffffff' },
-  light: { bg: '#ffffff', card: '#ffffff', ink: '#0f1f33', muted: '#55657a', line: '#e3e8ef', brand: '#1d4e89', accent: '#f28c1b', ringA: '#ffb340', ringB: '#f07a12', btn: '#1f6fd6', btnInk: '#ffffff' },
-  navy: { bg: '#13233a', card: '#1b3050', ink: '#ffffff', muted: '#b8c6d8', line: '#2c4468', brand: '#ffffff', accent: '#f2b632', ringA: '#ffcf5a', ringB: '#f29b1b', btn: '#f2b632', btnInk: '#13233a' },
+  // Navy #1f3d7b and gray #a8a9ad are the logo's own colors.
+  brand: { bg: '#eef2f8', card: '#ffffff', ink: '#14254a', muted: '#5a6b80', line: '#dde3ee', brand: '#1f3d7b', accent: '#d9a21b', ringA: '#f4a51c', ringB: '#e0711a', btn: '#1f3d7b', btnInk: '#ffffff' },
+  light: { bg: '#ffffff', card: '#ffffff', ink: '#101d3a', muted: '#55657a', line: '#e3e8ef', brand: '#1f3d7b', accent: '#f28c1b', ringA: '#ffb340', ringB: '#f07a12', btn: '#2a55a8', btnInk: '#ffffff' },
+  navy: { dark: true, bg: '#14254a', card: '#1f3463', ink: '#ffffff', muted: '#bcc8db', line: '#33497a', brand: '#ffffff', accent: '#f2b632', ringA: '#ffcf5a', ringB: '#f29b1b', btn: '#f2b632', btnInk: '#14254a' },
 };
 
 const CATS = [
@@ -90,7 +91,20 @@ function fontFaces() {
   return fontCss;
 }
 
+// The Mid-America Web Solutions logo from midamericaweb.com: full color on light
+// backgrounds, white on navy. Falls back to the name in text if the files are missing.
+const logoCache = {};
+function logoData(variant) {
+  if (!(variant in logoCache)) {
+    const file = path.join(__dirname, '..', '..', 'assets', `logo-${variant}.png`);
+    logoCache[variant] = fs.existsSync(file) ? `data:image/png;base64,${fs.readFileSync(file).toString('base64')}` : null;
+  }
+  return logoCache[variant];
+}
+
 function brandMark(agency, p, scale = 1) {
+  const logo = logoData(p.dark ? 'white' : 'color');
+  if (logo) return `<div style="display:flex;flex:none"><img src="${logo}" alt="${agency.name}" style="height:${68 * scale}px;width:auto;max-width:100%;object-fit:contain;display:block"></div>`;
   return `<div class="mark" style="font-size:${26 * scale}px;color:${p.brand}"><i style="width:${16 * scale}px;height:${16 * scale}px;background:${p.accent}"></i>${agency.name}</div>`;
 }
 
