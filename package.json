@@ -6,7 +6,8 @@
   "private": true,
   "scripts": {
     "start": "node server.js",
-    "test": "node test/smoke.js"
+    "test": "node test/smoke.js && node test/skill.js",
+    "build:skill": "./tools/build-skill.sh"
   },
   "engines": { "node": ">=18.17" }
 }

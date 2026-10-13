@@ -47,3 +47,13 @@ Any Node host works. On **Render**: New → Web Service → this repo, build com
 - `POST /audit` — runs an audit and redirects to the report
 - `GET /r/:id` — customer report; add `?format=json` for raw data
 - `GET /api/audit?url=…&city=…` — run an audit and return JSON (for Zapier, a CRM, or a public lead form)
+
+## Use it as a Claude skill ("seo report")
+
+The same engine ships as a Claude skill in `.claude/skills/seo-report/`. Say **"seo report acmeplumbing.com"** (or `/seo-report acmeplumbing.com Wichita, KS`) and Claude looks up the Google rating and review count, runs the audit, publishes the report page and writes a short message you can send the prospect.
+
+- **Claude Code:** works automatically in this repo. To use it in every project, copy `.claude/skills/seo-report` to `~/.claude/skills/`.
+- **claude.ai (chat or Cowork):** upload `dist/seo-report.zip` under Settings → Capabilities → Skills. Code execution needs network access to reach websites.
+- **Your contact details:** fill in `.claude/skills/seo-report/agency.json` so every report ends with your phone, email and booking link.
+
+The skill keeps its own copy of `lib/`. After changing `lib/`, run `npm run build:skill` to refresh it and the zip; `npm test` fails if they drift apart.
