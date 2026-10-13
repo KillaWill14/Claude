@@ -1,0 +1,83 @@
+# Builds a fresh batch of free-audit ads every morning, keeps the images and
+# spreadsheet as a downloadable artifact, and (when Meta secrets are set)
+# uploads them to your ad set as PAUSED ads for review.
+#
+# Repository settings used:
+#   Secrets:   ANTHROPIC_API_KEY (fresh Claude copy), META_ACCESS_TOKEN,
+#              META_AD_ACCOUNT_ID, META_PAGE_ID, META_LEAD_FORM_ID (optional)
+#   Variables: AD_DAILY_COUNT (default 100), AD_INDUSTRIES (default all),
+#              AD_CITIES (e.g. "Belleville, IL;O'Fallon, IL"), AD_LINK, META_ADSET_ID
+name: Daily ad batch
+
+on:
+  schedule:
+    - cron: '47 11 * * *' # 6:47am Central (11:47 UTC during daylight time)
+  workflow_dispatch:
+    inputs:
+      count:
+        description: How many ads
+        default: '100'
+      industries:
+        description: Industries (comma separated, or all)
+        default: all
+      upload:
+        description: Upload to Meta as paused ads
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: ads
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ads/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Generate ads
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          AD_LINK: ${{ vars.AD_LINK }}
+        run: |
+          node generate.js \
+            --count "${{ inputs.count || vars.AD_DAILY_COUNT || '100' }}" \
+            --industries "${{ inputs.industries || vars.AD_INDUSTRIES || 'all' }}" \
+            --cities "${{ vars.AD_CITIES }}" \
+            --ai --ai-share 0.6 \
+            --out ../out/ads/batch
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ads-${{ github.run_number }}
+          path: out/ads/batch
+          retention-days: 30
+      - name: Upload to Meta (paused)
+        if: ${{ github.event_name == 'schedule' || inputs.upload }}
+        env:
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          META_AD_ACCOUNT_ID: ${{ secrets.META_AD_ACCOUNT_ID }}
+          META_PAGE_ID: ${{ secrets.META_PAGE_ID }}
+          META_LEAD_FORM_ID: ${{ secrets.META_LEAD_FORM_ID }}
+          ADSET: ${{ vars.META_ADSET_ID }}
+        run: |
+          if [ -z "$META_ACCESS_TOKEN" ] || [ -z "$ADSET" ]; then
+            echo "Meta secrets or META_ADSET_ID not set; skipping upload."
+          else
+            node upload-meta.js ../out/ads/batch --adset "$ADSET" --live
+          fi
+      - name: Save ad history so tomorrow's batch never repeats an ad
+        run: |
+          git config user.name "ad-batch-bot"
+          git config user.email "ad-batch-bot@users.noreply.github.com"
+          git add history.jsonl
+          git commit -m "Record ad batch ${{ github.run_number }}" || echo "Nothing to record"
+          git push

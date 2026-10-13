@@ -1,0 +1,19 @@
+{
+  "name": "mid-america-ad-factory",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Generates Facebook ad copy and creatives promoting the Mid-America Web Solutions free website audit.",
+  "scripts": {
+    "generate": "node generate.js",
+    "upload": "node upload-meta.js",
+    "test": "node test.js"
+  },
+  "engines": { "node": ">=18.17" },
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.130.0",
+    "@fontsource/archivo": "5.1.1",
+    "@fontsource/fraunces": "5.1.1",
+    "@fontsource/public-sans": "5.1.1",
+    "playwright": "1.56.1"
+  }
+}

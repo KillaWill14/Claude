@@ -59,3 +59,7 @@ The same engine ships as a Claude skill in `.claude/skills/seo-report/`. Say **"
 - **Your contact details:** fill in `.claude/skills/seo-report/agency.json` so every report ends with your phone, email and booking link.
 
 The skill keeps its own copy of `lib/`. After changing `lib/`, run `npm run build:skill` to refresh it and the zip; `npm test` fails if they drift apart.
+
+## Facebook ads for the free audit
+
+`ads/` generates Facebook and Instagram ads that promote the free audit, with images, copy, a feed preview, Meta upload and a daily GitHub Actions run. See [ads/README.md](ads/README.md). In Claude Code, say "make 50 ads for roofers in Belleville" to use the `fb-ads` skill.
