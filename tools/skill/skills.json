@@ -1,0 +1,16 @@
+[
+  {
+    "dir": "seo-report",
+    "brand": "midamerica",
+    "title": "SEO Report: Mid-America Web Solutions",
+    "description": "Creates a scored, customer-ready website audit branded for Mid-America Web Solutions. Use whenever the user says \"seo report\", \"website audit\", \"free audit\" or \"audit\" followed by a website, or asks how a business website is doing, unless they mention Bold Form (that is the boldform-seo-report skill). Scores Website Health, SEO, AI Optimization, Local Listings, Reviews and Social Media, compares Google ratings with local competitors, gives an overall grade, and publishes a report page they can send to the prospect.",
+    "otherNote": "If the user wants the report for Bold Form Marketing instead, use the boldform-seo-report skill (or tell them to upload it if it isn't available)."
+  },
+  {
+    "dir": "boldform-seo-report",
+    "brand": "boldform",
+    "title": "SEO Report: Bold Form Marketing",
+    "description": "Creates a scored, customer-ready website audit branded for Bold Form Marketing. Use whenever the user says \"bold form seo report\", \"bold form audit\", \"BF report\" or \"BFM report\", or asks for an SEO report, website audit or free audit for Bold Form or with Bold Form branding. Scores Website Health, SEO, AI Optimization, Local Listings, Reviews and Social Media, compares Google ratings with local competitors, gives an overall grade, and publishes a report page they can send to the prospect.",
+    "otherNote": "If the user wants the report for Mid-America Web Solutions instead, use the seo-report skill (or tell them to upload it if it isn't available)."
+  }
+]

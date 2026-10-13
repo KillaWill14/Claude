@@ -54,13 +54,19 @@ Any Node host works. On **Render**: New → Web Service → this repo, build com
 
 ## Use it as a Claude skill ("seo report")
 
-The same engine ships as a Claude skill in `.claude/skills/seo-report/`. Say **"seo report acmeplumbing.com"** (or `/seo-report acmeplumbing.com Wichita, KS`) and Claude looks up the Google rating and review count, runs the audit, publishes the report page and writes a short message you can send the prospect.
+The same engine ships as two Claude skills, one per brand, so each report always carries the right logo and contact details:
 
-- **Claude Code:** works automatically in this repo. To use it in every project, copy `.claude/skills/seo-report` to `~/.claude/skills/`.
-- **claude.ai (chat or Cowork):** upload `dist/seo-report.zip` under Settings → Capabilities → Skills. Code execution needs network access to reach websites.
-- **Brand:** say which agency the report is for ("seo report acme.com for Bold Form"); Claude asks if you don't.
+| Skill | Brand | Say |
+|---|---|---|
+| `seo-report` | Mid-America Web Solutions | "seo report acmeplumbing.com" |
+| `boldform-seo-report` | Bold Form Marketing | "bold form seo report acmeplumbing.com" or "BF report acmeplumbing.com" |
 
-The skill keeps its own copy of `lib/`. After changing `lib/`, run `npm run build:skill` to refresh it and the zip; `npm test` fails if they drift apart.
+Claude looks up the Google rating, review count and local competitors, runs the audit, publishes the report page and writes a short message you can send the prospect.
+
+- **Claude Code:** both work automatically in this repo. To use them in every project, copy the folders from `.claude/skills/` to `~/.claude/skills/`.
+- **claude.ai (chat or Cowork):** upload `dist/seo-report.zip` and/or `dist/boldform-seo-report.zip` under Settings → Capabilities → Skills. Code execution needs network access to reach websites.
+
+Both skills are generated from `tools/skill/` (the shared `SKILL.template.md`, `run.js` and `skills.json`) plus `lib/` and `brands/`. After changing any of those, run `npm run build:skill` to rebuild the skill folders and zips; `npm test` fails if they drift apart.
 
 ## Facebook ads for the free audit
 

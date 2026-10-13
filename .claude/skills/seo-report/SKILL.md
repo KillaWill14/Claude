@@ -1,23 +1,20 @@
 ---
 name: seo-report
-description: Creates a scored, customer-ready website audit for Mid-America Web Solutions or Bold Form Marketing prospects. Use whenever the user says "seo report", "website audit", "free audit" or "audit" followed by a website, or gives a business website and asks how it is doing. Scores Website Health, SEO, AI Optimization, Local Listings, Reviews and Social Media, gives an overall grade, and publishes a branded report page they can send to the prospect.
+description: Creates a scored, customer-ready website audit branded for Mid-America Web Solutions. Use whenever the user says "seo report", "website audit", "free audit" or "audit" followed by a website, or asks how a business website is doing, unless they mention Bold Form (that is the boldform-seo-report skill). Scores Website Health, SEO, AI Optimization, Local Listings, Reviews and Social Media, compares Google ratings with local competitors, gives an overall grade, and publishes a report page they can send to the prospect.
 ---
+<!-- Generated from tools/skill/SKILL.template.md by tools/build-skill.sh. Edit the template, not this file. -->
 
-# SEO Report
+# SEO Report: Mid-America Web Solutions
 
-Produces the free website audit for one prospect website, branded for Mid-America Web Solutions or Bold Form Marketing: an overall score and grade, six category scores, the top fixes ranked by impact, and a detailed checklist with "How we'd fix it" lines. The scoring is done by the bundled script so every report is scored the same way. Your job is to gather the inputs, run it, publish the report, and summarize it.
+Produces the Mid-America Web Solutions free website audit for one prospect website: an overall score and grade, six category scores, the top fixes ranked by impact, and a detailed checklist with "How we'd fix it" lines. The scoring is done by the bundled script so every report is scored the same way. Your job is to gather the inputs, run it, publish the report, and summarize it.
 
 `SKILL_DIR` below means the folder this file is in.
 
 ## 1. Read the request
 
-**Brand.** Each report carries one agency's logo, colors and contact details. Pass it to the script with `--brand`:
-- `midamerica`: Mid-America Web Solutions (the user says "Mid-America", "MAWS", "midamericaweb")
-- `boldform`: Bold Form Marketing (the user says "Bold Form", "BFM", "boldformmarketing")
+**Brand.** Every report from this skill carries the Mid-America Web Solutions logo, colors and contact details (`--brand midamerica`). If the user wants the report for Bold Form Marketing instead, use the boldform-seo-report skill (or tell them to upload it if it isn't available).
 
-If the message doesn't say which, and nothing earlier in the conversation settles it, ask once which brand the report is for before running it. Brand settings live in `SKILL_DIR/scripts/brands/<brand>/brand.json`.
-
-From the user's message also take:
+From the user's message take:
 - **Website** (required). If they gave only a business name, search the web for its official site and confirm it with them if there is any doubt.
 - **City, State** and **business name**, if given. If not, leave them out; the script reads them from the site. If the site names a clear home city, pass it with `--city` so the local SEO checks run.
 
@@ -42,7 +39,7 @@ Use only numbers you actually saw, and only Google ratings (not Yelp, Facebook o
 ## 3. Run the audit
 
 ```bash
-node SKILL_DIR/scripts/run.js <website> --brand boldform --city "City, ST" --name "Business Name" \
+node SKILL_DIR/scripts/run.js <website> --brand midamerica --city "City, ST" --name "Business Name" \
   --rating 4.6 --reviews 37 --profile yes --maps-url "<listing link>" \
   --competitor "Name | 4.8 | 212" --competitor "Name | 4.5 | 96" --out <output folder>
 ```
@@ -78,4 +75,4 @@ Keep it short:
 4. Any gaps: items "Not checked", Google data you could not find, or a missing PageSpeed result.
 5. A ready-to-send message to the prospect, 3–4 sentences, plain and friendly, that names one or two specific findings and offers a call. Example tone: "Hi Dana, I ran a free audit of prairiecreekplumbing.com. You're getting good reviews, but Google can't tell what city you serve and AI tools like ChatGPT are blocked from reading your site. The full report is here: <link>. Happy to walk you through it in 15 minutes this week."
 
-To change a brand's phone, email, website or booking link, edit that brand's `brand.json` (in the repository: `brands/<brand>/brand.json`, then run `./tools/build-skill.sh`).
+To change the phone, email, website or booking link on reports, edit `brands/midamerica/brand.json` in the repository and run `./tools/build-skill.sh`. The bundled copy is `SKILL_DIR/scripts/brands/midamerica/brand.json`.
