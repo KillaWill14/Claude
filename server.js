@@ -11,10 +11,10 @@ fs.mkdirSync(DATA_DIR, { recursive: true });
 
 const agency = {
   name: process.env.AGENCY_NAME || 'Mid-America Web Solutions',
-  phone: process.env.AGENCY_PHONE || '',
-  email: process.env.AGENCY_EMAIL || '',
-  website: process.env.AGENCY_WEBSITE || '',
-  bookingUrl: process.env.AGENCY_BOOKING_URL || '',
+  phone: process.env.AGENCY_PHONE || '877-355-5020',
+  email: process.env.AGENCY_EMAIL || 'info@midamericaweb.com',
+  website: process.env.AGENCY_WEBSITE || 'https://midamericaweb.com',
+  bookingUrl: process.env.AGENCY_BOOKING_URL || 'https://midamericaweb.com/contact-us/',
 };
 
 function page(body) {

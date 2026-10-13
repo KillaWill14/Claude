@@ -229,7 +229,7 @@ h2 { font: 800 24px/1.15 var(--display); font-stretch: 105%; margin: 36px 0 4px;
     <h2>Ready to fix these and get found first?</h2>
     <p>${esc(agency.name || 'Mid-America Web Solutions')} handles every item in this report: SEO, AI search optimization, Google Business Profile management, review generation and social setup. We'll walk you through this audit and build a plan for your market.</p>
     ${contact ? `<div class="contact">${contact}</div>` : ''}
-    ${agency.bookingUrl ? `<a class="book" href="${esc(agency.bookingUrl)}">Book a free strategy call</a>` : ''}
+    ${agency.bookingUrl ? `<a class="book" href="${esc(agency.bookingUrl)}">Schedule a free strategy call</a>` : ''}
   </section>
   <p class="method">This audit was generated on ${esc(date)} by scanning ${esc(a.finalUrl)} and its robots.txt, sitemap and llms.txt files${a.pagespeed ? ', running Google PageSpeed Insights on mobile' : ''}${g.found && g.mapsUrl ? ', and reading the Google Business Profile' : ''}. Items marked "Not checked" were not included in the score. Results reflect the homepage at the time of the scan.</p>
 </main>

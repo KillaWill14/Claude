@@ -1,6 +1,6 @@
 ---
 name: seo-report
-description: Creates a scored, customer-ready website audit for Mid-America Web Solutions prospects. Use whenever the user says "seo report", "website audit", "free audit" or "audit <website>", or gives a business website and asks how it is doing. Scores Website Health, SEO, AI Optimization, Local Listings, Reviews and Social Media, gives an overall grade, and publishes a branded report page they can send to the prospect.
+description: Creates a scored, customer-ready website audit for Mid-America Web Solutions prospects. Use whenever the user says "seo report", "website audit", "free audit" or "audit" followed by a website, or gives a business website and asks how it is doing. Scores Website Health, SEO, AI Optimization, Local Listings, Reviews and Social Media, gives an overall grade, and publishes a branded report page they can send to the prospect.
 ---
 
 # SEO Report
